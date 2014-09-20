@@ -16,6 +16,8 @@ using TestStack.White.UIItems.Finders;
 using TestStack.White.AutomationElementSearch;
 using TestStack.White.UIItems.WindowItems;
 using TestStack.White.UIItems.WPFUIItems;
+using TestStack.White.WindowsAPI;
+using TestStack.White.InputDevices;
 
 namespace WhiteRobotLibrary
 {
@@ -87,6 +89,15 @@ namespace WhiteRobotLibrary
         }
 
         /// <summary>
+        /// Closes the application launched by LaunchApp keyword.
+        /// The process is killed by force if tidy closing fails.
+        /// | CloseApp |
+        /// </summary>
+        public void CloseApp() {
+            testApp.Close();
+        }
+
+        /// <summary>
         /// Assuming the application is already launched,
         /// this keyword can be used for connecting to the already running application.
         /// The application can be identified using its process name or process ID.
@@ -139,8 +150,7 @@ namespace WhiteRobotLibrary
                 testAppWin = windowList[indx - 1];
             } else {
                 testAppWin = Desktop.Instance.Windows().Find(obj => obj.Title.Contains(TitleOrIndex));
-            }
-            
+            }        
         }
 
         /// <summary>
@@ -155,10 +165,11 @@ namespace WhiteRobotLibrary
         /// | ClickObject | xpath=//MenuItem[@className=File][@text='Some Item']       |
         /// | ClickObject | xpath=//MenuItem[1]                                        |
         /// | ClickObject | xpath=//Edit[@automationId='001234'][@text='Some Text'][2] |
+        /// | ClickObject | xpath=//Pane[@text='x']/descendant::Button[@text='Ok'][3]  |
         /// </summary>
         /// <param name="elementId"></param>
         public void ClickObject(String elementId) {
-            (testAppWin.Get(GetBy(elementId)) as UIItem).RaiseClickEvent();
+            (findUIObject(elementId) as UIItem).RaiseClickEvent();
         }
 
         /// <summary>
@@ -172,10 +183,35 @@ namespace WhiteRobotLibrary
         /// | ClickObjectWithMouse | xpath=//MenuItem[@className=File][@text='Some Item']       |
         /// | ClickObjectWithMouse | xpath=//MenuItem[1]                                        |
         /// | ClickObjectWithMouse | xpath=//Edit[@automationId='001234'][@text='Some Text'][2] |
+        /// | ClickObjectWithMouse | xpath=//Pane[@text='x']/descendant::Button[@text='Ok'][3]  |
         /// </summary>
         /// <param name="elementId"></param>
         public void ClickObjectWithMouse(String elementId) {
-            testAppWin.Get(GetBy(elementId)).Click();
+            findUIObject(elementId).Click();
+        }
+
+        /// <summary>
+        /// Clicks away from the given screen object by the given offset using the left mouse button.
+        /// The click is executed using a 'true' mouse event. Horizontal positive direction is left,
+        /// vertical positive direction is down.
+        /// The simple element locators are automationId, className, controlType, text and those are used as:
+        /// automationId=myId, className=myClassName, controlType=MenuItem, text=someText.
+        /// The xpath is much more versatile locator, which combines the controlType, simple element locator and index, for example
+        /// | ClickWithOffset | automationId=myId                                          | 100 | 100 |
+        /// | ClickWithOffset | text=Some Text                                             | 10  | -10 |
+        /// | ClickWithOffset | xpath=//Button[@text='Some text']                          |  0  | 100 |
+        /// | ClickWithOffset | xpath=//MenuItem[@className=File][@text='Some Item']       |-20  | -20 |
+        /// | ClickWithOffset | xpath=//MenuItem[1]                                        | 24  |  0  |
+        /// | ClickWithOffset | xpath=//Edit[@automationId='001234'][@text='Some Text'][2] |  4  |  4  |
+        /// | ClickWithOffset | xpath=//Pane[@text='x']/descendant::Button[@text='Ok'][3]  |  0  |  0  |
+        /// </summary>
+        /// <param name="elementId"></param>
+        /// <param name="xOff"></param>
+        /// <param name="yOff"></param>
+        public void ClickWithOffset(String elementId, String xOff, String yOff) {
+            System.Windows.Point po = findUIObject(elementId).Bounds.BottomRight;
+            po.Offset(1.0 * Convert.ToInt32(xOff), 1.0 * Convert.ToInt32(yOff));
+            testAppWin.Mouse.Click(po);
         }
 
         /// <summary>
@@ -189,10 +225,11 @@ namespace WhiteRobotLibrary
         /// | DoubleClickObject | xpath=//MenuItem[@className=File][@text='Some Item']       |
         /// | DoubleClickObject | xpath=//MenuItem[1]                                        |
         /// | DoubleClickObject | xpath=//Edit[@automationId='001234'][@text='Some Text'][2] |
+        /// | DoubleClickObject | xpath=//Pane[@text='x']/descendant::Button[@text='Ok'][3]  |
         /// </summary>
         /// <param name="elementId"></param>
         public void DoubleClickObject(String elementId) {
-            testAppWin.Get(GetBy(elementId)).DoubleClick();
+            findUIObject(elementId).DoubleClick();
         }
 
         /// <summary>
@@ -206,10 +243,11 @@ namespace WhiteRobotLibrary
         /// | RightClickObject | xpath=//MenuItem[@className=File][@text='Some Item']       |
         /// | RightClickObject | xpath=//MenuItem[1]                                        |
         /// | RightClickObject | xpath=//Edit[@automationId='001234'][@text='Some Text'][2] |
+        /// | RightClickObject | xpath=//Pane[@text='x']/descendant::Button[@text='Ok'][3]  |
         /// </summary>
         /// <param name="elementId"></param>
         public void RightClickObject(String elementId) {
-            testAppWin.Get(GetBy(elementId)).RightClick();
+            findUIObject(elementId).RightClick();
         }
 
         /// <summary>
@@ -223,10 +261,11 @@ namespace WhiteRobotLibrary
         /// | FocusOnObject | xpath=//MenuItem[@className=File][@text='Some Item']       |
         /// | FocusOnObject | xpath=//MenuItem[1]                                        |
         /// | FocusOnObject | xpath=//Edit[@automationId='001234'][@text='Some Text'][2] |
+        /// | FocusOnObject | xpath=//Pane[@text='x']/descendant::Button[@text='Ok'][3]  |
         /// </summary>
         /// <param name="elementId"></param>
         public void FocusOnObject(String elementId) {
-            testAppWin.Get(GetBy(elementId)).Focus();
+            findUIObject(elementId).Focus();
         }
 
         /// <summary>
@@ -266,7 +305,7 @@ namespace WhiteRobotLibrary
         }
 
         /// <summary>
-        /// Writes text on on the given screen object. The typing is executed using a 'true' keyboard event.
+        /// Writes text on the given screen object. The typing is executed using a 'true' keyboard event.
         /// The simple element locators are automationId, className, controlType, text and those are used as:
         /// automationId=myId, className=myClassName, controlType=MenuItem, text=someText.
         /// The xpath is much more versatile locator, which combines the controlType, simple element locator and index, for example
@@ -276,11 +315,106 @@ namespace WhiteRobotLibrary
         /// | WriteTextOnObject | xpath=//MenuItem[@className=File][@text='Some Item']       | Some text |
         /// | WriteTextOnObject | xpath=//MenuItem[1]                                        | Some text |
         /// | WriteTextOnObject | xpath=//Edit[@automationId='001234'][@text='Some Text'][2] | Some text |
+        /// | WriteTextOnObject | xpath=//Pane[@text='x']/descendant::Button[@text='Ok'][3]  | Some text |
         /// </summary>
         /// <param name="elementId"></param>
         /// <param name="text"></param>
         public void WriteTextOnObject(String elementId, String text) {
-            testAppWin.Get(GetBy(elementId)).Enter(text);
+            findUIObject(elementId).Enter(text);
+        }
+
+        /// <summary>
+        /// Writes text on the current carret position. The typing is executed using a 'true' keyboard event.
+        /// The keyword is used as
+        /// | WriteText | Some text |
+        /// </summary>
+        /// <param name="text"></param>
+        public void WriteText(String text) {
+            testAppWin.Keyboard.Enter(text);
+        }
+
+        /// <summary>
+        /// Presses the selected special key from the keyboard. The typing is executed using a 'true' keyboard event.
+        /// The currently supported keys are: ENTER, BACKSPACE, TAB, ESC, ARROW_UP, ARROW_DOWN, 
+		/// ARROW_RIGHT, ARROW_LEFT, PAGE_UP, PAGE_DOWN, DELETE, END, HOME, INSERT, SHIFT, CTRL, ALT and F1 - F12.
+        /// The keyword is used as
+        /// | PressKey | ENTER |
+        /// </summary>
+        /// <param name="key"></param>
+        public void PressKey(String key) { 
+            switch (key) { 
+                case "ENTER":       testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.RETURN);    break;
+                case "BACKSPACE":   testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.BACKSPACE); break;
+                case "TAB":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.TAB);       break;
+                case "ESC":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.ESCAPE);    break;
+                case "ARROW_UP":    testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.UP);        break;
+                case "ARROW_DOWN":  testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.DOWN);      break;
+                case "ARROW_RIGHT": testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.RIGHT);     break;
+                case "ARROW_LEFT":  testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.LEFT);      break;
+                case "PAGE_UP":     testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.PAGEUP);    break;
+                case "PAGE_DOWN":   testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.PAGEDOWN);  break;
+                case "DELETE":      testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.DELETE);    break;
+                case "END":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.END);       break;
+                case "HOME":        testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.HOME);      break;
+                case "INSERT":      testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.INSERT);    break;
+                case "SHIFT":       testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.SHIFT);     break;
+                case "CTRL":        testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.CONTROL);   break;
+                case "ALT":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.ALT);       break;
+                case "F1":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F1);        break;
+                case "F2":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F2);        break;
+                case "F3":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F3);        break;
+                case "F4":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F4);        break;
+                case "F5":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F5);        break;
+                case "F6":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F6);        break;
+                case "F7":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F7);        break;
+                case "F8":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F8);        break;
+                case "F9":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F9);        break;
+                case "F10":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F10);       break;
+                case "F11":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F11);       break;
+                case "F12":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F12);       break;
+                case "NUMLOCK":     testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.NUMLOCK);   break;
+                default: break;
+            }            
+        }
+
+        /// <summary>
+        /// Presses the selected special key from the keyboard plus a normal key.
+        /// The currently supported modifier keys are: CTRL, ALT, SHIFT and CTRL+ALT.
+        /// The keyword is used as
+        /// | PressKeyCombination | CTRL      | a |
+        /// | PressKeyCombination | CTRL      | v |
+        /// | PressKeyCombination | ALT       | u |
+        /// | PressKeyCombination | SHIFT     | x |
+        /// | PressKeyCombination | CTRL+ALT  | a |
+        /// </summary>
+        /// <param name="modifier"></param>
+        /// <param name="keys"></param>
+        public void PressKeyCombination(String modifier, String keys) {
+            switch (modifier) {
+                case "CTRL":   
+                    testAppWin.Keyboard.HoldKey(KeyboardInput.SpecialKeys.CONTROL);
+                    testAppWin.Keyboard.Enter(keys);
+                    testAppWin.Keyboard.LeaveKey(KeyboardInput.SpecialKeys.CONTROL);
+                    break;
+                case "ALT":
+                    testAppWin.Keyboard.HoldKey(KeyboardInput.SpecialKeys.ALT);
+                    testAppWin.Keyboard.Enter(keys);
+                    testAppWin.Keyboard.LeaveKey(KeyboardInput.SpecialKeys.ALT);
+                    break;
+                case "SHIFT":
+                    testAppWin.Keyboard.HoldKey(KeyboardInput.SpecialKeys.SHIFT);
+                    testAppWin.Keyboard.Enter(keys);
+                    testAppWin.Keyboard.LeaveKey(KeyboardInput.SpecialKeys.SHIFT);
+                    break;
+                case "CTRL+ALT":
+                    testAppWin.Keyboard.HoldKey(KeyboardInput.SpecialKeys.CONTROL);
+                    testAppWin.Keyboard.HoldKey(KeyboardInput.SpecialKeys.ALT);
+                    testAppWin.Keyboard.Enter(keys);
+                    testAppWin.Keyboard.LeaveKey(KeyboardInput.SpecialKeys.ALT);
+                    testAppWin.Keyboard.LeaveKey(KeyboardInput.SpecialKeys.CONTROL);
+                    break;
+                default: break;
+            }
         }
 
         /// <summary>
@@ -295,11 +429,12 @@ namespace WhiteRobotLibrary
         /// | ${text}= | ReadTextFromObject | xpath=//MenuItem[@className=File][@text='Some Item']       |
         /// | ${text}= | ReadTextFromObject | xpath=//MenuItem[1]                                        |
         /// | ${text}= | ReadTextFromObject | xpath=//Edit[@automationId='001234'][@text='Some Text'][2] |
+        /// | ${text}= | ReadTextFromObject | xpath=//Pane[@text='x']/descendant::Button[@text='Ok'][3]  |
         /// </summary>
         /// <param name="elementId"></param>
         /// <returns></returns>
         public String ReadTextFromObject(String elementId) {
-            return testAppWin.Get(GetBy(elementId)).Name;
+            return findUIObject(elementId).Name;
         }
 
         /// <summary>
@@ -339,8 +474,7 @@ namespace WhiteRobotLibrary
         /// <param name="elementId"></param>
         /// <returns></returns>
         public void SelectCheckBox(String elementId) {
-            UIItem item = (testAppWin.Get(GetBy(elementId)) as UIItem);
-            ToggleableItem togg = new ToggleableItem(item);
+            ToggleableItem togg = new ToggleableItem(findUIObject(elementId) as UIItem);
             while (ToggleState.On != togg.State)
                 togg.Toggle();
         }
@@ -359,8 +493,7 @@ namespace WhiteRobotLibrary
         /// <param name="elementId"></param>
         /// <returns></returns>
         public void UnSelectCheckBox(String elementId) {
-            UIItem item = (testAppWin.Get(GetBy(elementId)) as UIItem);
-            ToggleableItem togg = new ToggleableItem(item);
+            ToggleableItem togg = new ToggleableItem(findUIObject(elementId) as UIItem);
             while (ToggleState.Off != togg.State)
                 togg.Toggle();
         }
@@ -469,9 +602,8 @@ namespace WhiteRobotLibrary
         /// Keyword for testing purposes to see what elements are found under some top-level element.
         /// </summary>
         /// <param name="elementId"></param>
-        public void LogObject(String elementId)
-        {
-            (testAppWin.Get(GetBy(elementId)) as UIItem).LogStructure();
+        public void LogObject(String elementId) {
+            testAppWin.Get(GetBy(elementId)).LogStructure();
         }
 
         /// <summary>
@@ -480,7 +612,7 @@ namespace WhiteRobotLibrary
         /// </summary>
         /// <param name="elementId"></param>
         public void IsObjectEnabled(String elementId) {
-            if ( !(testAppWin.GetElement(GetBy(elementId)).Current.IsEnabled) )
+            if ( !(findUIObject(elementId).AutomationElement.Current.IsEnabled) )
                 throw new ElementNotEnabledException("Given object is not enabled");
         }
 
@@ -490,7 +622,7 @@ namespace WhiteRobotLibrary
         /// </summary>
         /// <param name="elementId"></param>
         public void IsObjectVisible(String elementId) {
-            if (!(testAppWin.GetElement(GetBy(elementId)).Current.IsOffscreen))
+            if ( !(findUIObject(elementId).AutomationElement.Current.IsOffscreen) )
                 throw new ElementNotAvailableException("Given object is not visible");
         }
 
@@ -549,6 +681,55 @@ namespace WhiteRobotLibrary
             if (result) typeEnum = (AutomationControlType)Enum.Parse(typeof(AutomationControlType), controlTypeString);
             int enumId = (int)typeEnum + 50000;
             return ControlType.LookupById(enumId);
+        }
+
+
+        private IUIItem findUIObject(String elementId) {
+            string[] elements = new string[] { elementId, "", "" ,"" };
+            // applies only to special case xpath=//Pane[@text='ss']>>>Edit>>>Settings>>>1
+            if (elementId.Contains(">>>")) {
+                elements = elementId.Split(new string[] { ">>>" }, StringSplitOptions.RemoveEmptyEntries);
+                AutomationElement parent = (testAppWin.Get(GetBy(elements[0])) as UIItem).AutomationElement;
+                return simpleDescendantSearch(parent, elements[1], elements[2], Convert.ToInt32(elements[3]));
+            }
+            else if (elementId.StartsWith("xpath=") && !elementId.Contains(">>>")) {
+                string elementString = elementId.Substring(8);
+                string[] els = elementString.Split(new string[] { "/descendant::" }, StringSplitOptions.RemoveEmptyEntries);
+                Trace.TraceInformation("NEW 0: "+ els[0]);
+                Trace.TraceInformation("NEW 1: " + els[1]);
+                short i = 0;
+                foreach (string s in els) {
+                    elements[i] = "xpath=//" + s;
+                    Trace.TraceInformation(elements[i]);
+                    i++;
+                }
+            }
+            IUIItem ui = testAppWin.Get(GetBy(elements[0]));
+            Trace.TraceInformation("ELEM 0: " + elements[0]);
+            for (short i = 1; i < elements.Length; i++) {
+                Trace.TraceInformation(elements[i]);
+                if (elements[i].Length > 0) { ui = ui.Get(GetBy(elements[i])); }
+            }
+            return ui;
+        }
+
+        // This was created as a hack in a need for partial match for UIobject name property
+        // usage: xpath=//Pane[@text='ss']>>>Edit>>>Settings>>>1  , where Edit is ctrlType, Settings is the name and 1 is the index
+        private IUIItem simpleDescendantSearch(AutomationElement parent, String ctrlType, String text, int indx)
+        {
+            AutomationElementCollection descendants = parent.FindAll(TreeScope.Descendants, Condition.TrueCondition);
+            UIItem ui = null;
+            AutomationElement ae = null;
+            int i = 0;
+            foreach (AutomationElement de in descendants) {
+                Trace.TraceInformation("simpleDescendantSearch: " + de.Current.ControlType.ProgrammaticName + " - " + de.Current.Name + " - " + de.Current.IsOffscreen);
+                if (de.Current.ControlType.ProgrammaticName.Substring(12).Equals(ctrlType) && de.Current.Name.Contains(text)) {
+                    i++;
+                }
+                if (i == indx) { ae = de; i++; }
+            }
+            if (ae != null) { ui = new UIItem(ae, testAppWin.ActionListener); }
+            return ui as IUIItem;
         }
 
     }

@@ -23,3 +23,5 @@ Please also take a look at the WhiteRobotLibrary.html for keyword documentation.
 
 Happy testing!
 
+PS. In some cases it is recommended to use the UIAComWrapper branch of TestStack.White. The UIAComWrapper exposes more objects to be visible for White. The UIAutomationVerify also uses the UIAComWrapper, so it can be used as a reference to see what elements are locatable by White. 
+
