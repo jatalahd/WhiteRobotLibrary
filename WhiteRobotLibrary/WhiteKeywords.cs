@@ -695,19 +695,16 @@ namespace WhiteRobotLibrary
             else if (elementId.StartsWith("xpath=") && !elementId.Contains(">>>")) {
                 string elementString = elementId.Substring(8);
                 string[] els = elementString.Split(new string[] { "/descendant::" }, StringSplitOptions.RemoveEmptyEntries);
-                Trace.TraceInformation("NEW 0: "+ els[0]);
-                Trace.TraceInformation("NEW 1: " + els[1]);
                 short i = 0;
                 foreach (string s in els) {
                     elements[i] = "xpath=//" + s;
-                    Trace.TraceInformation(elements[i]);
+                    //Trace.TraceInformation(elements[i]);
                     i++;
                 }
             }
             IUIItem ui = testAppWin.Get(GetBy(elements[0]));
             Trace.TraceInformation("ELEM 0: " + elements[0]);
             for (short i = 1; i < elements.Length; i++) {
-                Trace.TraceInformation(elements[i]);
                 if (elements[i].Length > 0) { ui = ui.Get(GetBy(elements[i])); }
             }
             return ui;
