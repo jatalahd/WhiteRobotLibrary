@@ -38,7 +38,8 @@ namespace WhiteRobotLibrary
         private Window testAppWin = null;
         private List<String> locators = new List<String>() {"automationId", "className", "controlType", "text", "xpath"};
         private const char SEPARATOR = '=';
-        private char MENUPATHSEPARATOR = ',';
+        private const char MENUPATHSEPARATOR = ',';
+        private const char REPEATSEPARATOR = ':';
 
         /// <summary>
         /// Returns a string containing a space-separated string
@@ -154,6 +155,24 @@ namespace WhiteRobotLibrary
         }
 
         /// <summary>
+        /// Selects a blocking MessageBox window. Basically the same as SelectModalWindow.
+        /// | SelectMessageBoxWindow | Confirm Selection |
+        /// </summary>
+        /// <param name="Title"></param>
+        public void SelectMessageBoxWindow(String Title) {
+            testAppWin = testAppWin.MessageBox(Title);
+        }
+
+        /// <summary>
+        /// Activates focus on the currently selected window.
+        /// Hopefully brings the window into the foreground.
+        /// | FocusOnWindow |
+        /// </summary>
+        public void FocusOnWindow() {
+            testAppWin.Focus();
+        }
+
+        /// <summary>
         /// Invokes an internal click event on the given UI-item. NOTE! Internal click events are not supported by all UI-items!
         /// Click is executed via internal event, screen can be locked because mouse is not used.
         /// The simple element locators are automationId, className, controlType, text and those are used as:
@@ -250,6 +269,31 @@ namespace WhiteRobotLibrary
             findUIObject(elementId).RightClick();
         }
 
+
+        /// <summary>
+        /// Clicks away from the given screen object by the given offset using the left mouse button.
+        /// The click is executed using a 'true' mouse event. Horizontal positive direction is left,
+        /// vertical positive direction is down.
+        /// The simple element locators are automationId, className, controlType, text and those are used as:
+        /// automationId=myId, className=myClassName, controlType=MenuItem, text=someText.
+        /// The xpath is much more versatile locator, which combines the controlType, simple element locator and index, for example
+        /// | RightClickWithOffset | automationId=myId                                          | 100 | 100 |
+        /// | RightClickWithOffset | text=Some Text                                             | 10  | -10 |
+        /// | RightClickWithOffset | xpath=//Button[@text='Some text']                          |  0  | 100 |
+        /// | RightClickWithOffset | xpath=//MenuItem[@className=File][@text='Some Item']       |-20  | -20 |
+        /// | RightClickWithOffset | xpath=//MenuItem[1]                                        | 24  |  0  |
+        /// | RightClickWithOffset | xpath=//Edit[@automationId='001234'][@text='Some Text'][2] |  4  |  4  |
+        /// | RightClickWithOffset | xpath=//Pane[@text='x']/descendant::Button[@text='Ok'][3]  |  0  |  0  |
+        /// </summary>
+        /// <param name="elementId"></param>
+        /// <param name="xOff"></param>
+        /// <param name="yOff"></param>
+        public void RightClickWithOffset(String elementId, String xOff, String yOff) {
+            System.Windows.Point po = findUIObject(elementId).Bounds.BottomRight;
+            po.Offset(1.0 * Convert.ToInt32(xOff), 1.0 * Convert.ToInt32(yOff));
+            Mouse.Instance.RightClick(po);
+        }
+
         /// <summary>
         /// Places a focus on the given screen object.
         /// The simple element locators are automationId, className, controlType, text and those are used as:
@@ -330,6 +374,7 @@ namespace WhiteRobotLibrary
         /// </summary>
         /// <param name="text"></param>
         public void WriteText(String text) {
+            System.Threading.Thread.Sleep(waitAfterAction);
             testAppWin.Keyboard.Enter(text);
         }
 
@@ -337,59 +382,71 @@ namespace WhiteRobotLibrary
         /// Presses the selected special key from the keyboard. The typing is executed using a 'true' keyboard event.
         /// The currently supported keys are: ENTER, BACKSPACE, TAB, ESC, ARROW_UP, ARROW_DOWN, 
 		/// ARROW_RIGHT, ARROW_LEFT, PAGE_UP, PAGE_DOWN, DELETE, END, HOME, INSERT, SHIFT, CTRL, ALT and F1 - F12.
+        /// For repeatedly pressing the key for N times, one can use the notation key:N.
         /// The keyword is used as
         /// | PressKey | ENTER |
+        /// | PressKey | TAB   |
+        /// | PressKey | TAB:3 |
         /// </summary>
         /// <param name="key"></param>
-        public void PressKey(String key) { 
-            switch (key) { 
-                case "ENTER":       testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.RETURN);    break;
-                case "BACKSPACE":   testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.BACKSPACE); break;
-                case "TAB":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.TAB);       break;
-                case "ESC":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.ESCAPE);    break;
-                case "ARROW_UP":    testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.UP);        break;
-                case "ARROW_DOWN":  testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.DOWN);      break;
-                case "ARROW_RIGHT": testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.RIGHT);     break;
-                case "ARROW_LEFT":  testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.LEFT);      break;
-                case "PAGE_UP":     testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.PAGEUP);    break;
-                case "PAGE_DOWN":   testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.PAGEDOWN);  break;
-                case "DELETE":      testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.DELETE);    break;
-                case "END":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.END);       break;
-                case "HOME":        testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.HOME);      break;
-                case "INSERT":      testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.INSERT);    break;
-                case "SHIFT":       testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.SHIFT);     break;
-                case "CTRL":        testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.CONTROL);   break;
-                case "ALT":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.ALT);       break;
-                case "F1":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F1);        break;
-                case "F2":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F2);        break;
-                case "F3":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F3);        break;
-                case "F4":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F4);        break;
-                case "F5":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F5);        break;
-                case "F6":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F6);        break;
-                case "F7":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F7);        break;
-                case "F8":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F8);        break;
-                case "F9":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F9);        break;
-                case "F10":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F10);       break;
-                case "F11":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F11);       break;
-                case "F12":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F12);       break;
-                case "NUMLOCK":     testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.NUMLOCK);   break;
-                default: break;
-            }            
+        public void PressKey(String key) {
+            System.Threading.Thread.Sleep(waitAfterAction);
+            String[] temp = key.Split(REPEATSEPARATOR);
+            short repeat = 1;
+            if (temp.Length > 1) { repeat = Convert.ToInt16(temp[1]); }
+            for (int i = 0; i < repeat; i++) {
+                System.Threading.Thread.Sleep(500);
+                switch (temp[0]) {
+                    case "ENTER":       testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.RETURN);    break;
+                    case "BACKSPACE":   testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.BACKSPACE); break;
+                    case "TAB":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.TAB);       break;
+                    case "ESC":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.ESCAPE);    break;
+                    case "ARROW_UP":    testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.UP);        break;
+                    case "ARROW_DOWN":  testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.DOWN);      break;
+                    case "ARROW_RIGHT": testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.RIGHT);     break;
+                    case "ARROW_LEFT":  testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.LEFT);      break;
+                    case "PAGE_UP":     testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.PAGEUP);    break;
+                    case "PAGE_DOWN":   testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.PAGEDOWN);  break;
+                    case "DELETE":      testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.DELETE);    break;
+                    case "END":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.END);       break;
+                    case "HOME":        testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.HOME);      break;
+                    case "INSERT":      testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.INSERT);    break;
+                    case "SHIFT":       testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.SHIFT);     break;
+                    case "CTRL":        testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.CONTROL);   break;
+                    case "ALT":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.ALT);       break;
+                    case "F1":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F1);        break;
+                    case "F2":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F2);        break;
+                    case "F3":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F3);        break;
+                    case "F4":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F4);        break;
+                    case "F5":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F5);        break;
+                    case "F6":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F6);        break;
+                    case "F7":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F7);        break;
+                    case "F8":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F8);        break;
+                    case "F9":          testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F9);        break;
+                    case "F10":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F10);       break;
+                    case "F11":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F11);       break;
+                    case "F12":         testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.F12);       break;
+                    case "NUMLOCK":     testAppWin.Keyboard.PressSpecialKey(KeyboardInput.SpecialKeys.NUMLOCK);   break;
+                    default: break;
+                }
+            }
         }
 
         /// <summary>
         /// Presses the selected special key from the keyboard plus a normal key.
         /// The currently supported modifier keys are: CTRL, ALT, SHIFT and CTRL+ALT.
         /// The keyword is used as
-        /// | PressKeyCombination | CTRL      | a |
-        /// | PressKeyCombination | CTRL      | v |
-        /// | PressKeyCombination | ALT       | u |
-        /// | PressKeyCombination | SHIFT     | x |
-        /// | PressKeyCombination | CTRL+ALT  | a |
+        /// | PressKeyCombination | CTRL       | a |
+        /// | PressKeyCombination | CTRL       | v |
+        /// | PressKeyCombination | ALT        | u |
+        /// | PressKeyCombination | SHIFT      | x |
+        /// | PressKeyCombination | CTRL+ALT   | a |
+        /// | PressKeyCombination | CTRL+SHIFT | w |
         /// </summary>
         /// <param name="modifier"></param>
         /// <param name="keys"></param>
         public void PressKeyCombination(String modifier, String keys) {
+            System.Threading.Thread.Sleep(waitAfterAction);
             switch (modifier) {
                 case "CTRL":   
                     testAppWin.Keyboard.HoldKey(KeyboardInput.SpecialKeys.CONTROL);
@@ -411,6 +468,13 @@ namespace WhiteRobotLibrary
                     testAppWin.Keyboard.HoldKey(KeyboardInput.SpecialKeys.ALT);
                     testAppWin.Keyboard.Enter(keys);
                     testAppWin.Keyboard.LeaveKey(KeyboardInput.SpecialKeys.ALT);
+                    testAppWin.Keyboard.LeaveKey(KeyboardInput.SpecialKeys.CONTROL);
+                    break;
+                case "CTRL+SHIFT":
+                    testAppWin.Keyboard.HoldKey(KeyboardInput.SpecialKeys.CONTROL);
+                    testAppWin.Keyboard.HoldKey(KeyboardInput.SpecialKeys.SHIFT);
+                    testAppWin.Keyboard.Enter(keys);
+                    testAppWin.Keyboard.LeaveKey(KeyboardInput.SpecialKeys.SHIFT);
                     testAppWin.Keyboard.LeaveKey(KeyboardInput.SpecialKeys.CONTROL);
                     break;
                 default: break;
@@ -517,7 +581,7 @@ namespace WhiteRobotLibrary
 
         /// <summary>
         /// Selects a MenuItem from the main menubar.
-        /// Selection is done by invoking an true mouse event.
+        /// Selection is done by invoking a true mouse event.
         /// The menu item is identified by giving the path from the main menu item and the items should be separated using a comma as shown in examples below:
         /// | SelectMenuItem | File                     |
         /// | SelectMenuItem | Help,About               |
@@ -526,6 +590,20 @@ namespace WhiteRobotLibrary
         /// <returns></returns>
         public void SelectMenuItem(String menuPath) {
             (testAppWin.MenuBar.MenuItem(menuPath.Split(MENUPATHSEPARATOR)) as UIItem).RaiseClickEvent();
+        }
+
+
+        /// <summary>
+        /// Selects a PopUpMenuItem from the menu opened by right clicking some UI object.
+        /// Selection is done by invoking a true mouse event.
+        /// The menu item is identified by giving the path from the main menu item and the items should be separated using a comma as shown in examples below:
+        /// | SelectPopupMenuItem | Copy                     |
+        /// | SelectPopupMenuItem | New,Folder               |
+        /// </summary>
+        /// <param name="menuPath"></param>
+        /// <returns></returns>
+        public void SelectPopupMenuItem(String menuPath) {
+            (testAppWin.Popup.Item(menuPath.Split(MENUPATHSEPARATOR)) as UIItem).RaiseClickEvent();
         }
 
         /// <summary>
@@ -569,6 +647,18 @@ namespace WhiteRobotLibrary
         }
 
         /// <summary>
+        /// Performs drag and drop operation using the mouse.
+        /// For searching UI-objects from all open windows and the desktop use the :ROOT postfix
+        /// when defining the elementId. Otherwise the operation is performed
+        /// in the currently selected window. 
+        /// </summary>
+        /// <param name="elementId1"></param>
+        /// <param name="elementId2"></param>
+        public void DragAndDropObject(String elementId1, String elementId2) {
+            Mouse.Instance.DragAndDrop(findUIObject(elementId1), findUIObject(elementId2));
+        }
+
+        /// <summary>
         /// Saves a screenshot of the current screen.
         /// Creates a directory with name "scrshots" relative to the .dll path and saves the screenshot there.
         /// | GetScreenshot |
@@ -585,12 +675,10 @@ namespace WhiteRobotLibrary
         /// Keyword for testing purposes to see what patterns are supported by the given screen object
         /// </summary>
         /// <param name="elementId"></param>
-        public void LogSupportedPatterns(String elementId)
-        {
+        public void LogSupportedPatterns(String elementId) {
             AutomationElement ae = testAppWin.GetElement(GetBy(elementId));
             AutomationPattern[] patterns = ae.GetSupportedPatterns();
-            foreach (AutomationPattern patt in patterns)
-            {
+            foreach (AutomationPattern patt in patterns) {
                 Trace.TraceInformation(patt.ProgrammaticName);
                 Trace.TraceInformation(Automation.PatternName(patt));
                 Console.WriteLine(patt.ProgrammaticName);
@@ -600,10 +688,11 @@ namespace WhiteRobotLibrary
 
         /// <summary>
         /// Keyword for testing purposes to see what elements are found under some top-level element.
+        /// Sometimes can be used for refreshing the tree of UIobjects in the SUT.
         /// </summary>
         /// <param name="elementId"></param>
         public void LogObject(String elementId) {
-            testAppWin.Get(GetBy(elementId)).LogStructure();
+            findUIObject(elementId).LogStructure();
         }
 
         /// <summary>
@@ -686,6 +775,7 @@ namespace WhiteRobotLibrary
 
         private IUIItem findUIObject(String elementId) {
             string[] elements = new string[] { elementId, "", "" ,"" };
+            IUIItem ui = null; 
             // applies only to special case xpath=//Pane[@text='ss']>>>Edit>>>Settings>>>1
             if (elementId.Contains(">>>")) {
                 elements = elementId.Split(new string[] { ">>>" }, StringSplitOptions.RemoveEmptyEntries);
@@ -695,6 +785,7 @@ namespace WhiteRobotLibrary
             else if (elementId.StartsWith("xpath=") && !elementId.Contains(">>>")) {
                 string elementString = elementId.Substring(8);
                 string[] els = elementString.Split(new string[] { "/descendant::" }, StringSplitOptions.RemoveEmptyEntries);
+
                 short i = 0;
                 foreach (string s in els) {
                     elements[i] = "xpath=//" + s;
@@ -702,18 +793,20 @@ namespace WhiteRobotLibrary
                     i++;
                 }
             }
-            IUIItem ui = testAppWin.Get(GetBy(elements[0]));
-            Trace.TraceInformation("ELEM 0: " + elements[0]);
+            if (elementId.EndsWith(":ROOT")) {
+                ui = Desktop.Instance.Get(GetBy(elements[0]));
+            }
+            else {
+                ui = testAppWin.Get(GetBy(elements[0]));
+            }
             for (short i = 1; i < elements.Length; i++) {
+                //Trace.TraceInformation(elements[i]);
                 if (elements[i].Length > 0) { ui = ui.Get(GetBy(elements[i])); }
             }
             return ui;
         }
 
-        // This was created as a hack in a need for partial match for UIobject name property
-        // usage: xpath=//Pane[@text='ss']>>>Edit>>>Settings>>>1  , where Edit is ctrlType, Settings is the name and 1 is the index
-        private IUIItem simpleDescendantSearch(AutomationElement parent, String ctrlType, String text, int indx)
-        {
+        private IUIItem simpleDescendantSearch(AutomationElement parent, String ctrlType, String text, int indx) {
             AutomationElementCollection descendants = parent.FindAll(TreeScope.Descendants, Condition.TrueCondition);
             UIItem ui = null;
             AutomationElement ae = null;
