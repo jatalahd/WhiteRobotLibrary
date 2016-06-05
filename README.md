@@ -7,7 +7,7 @@ This is a basic Visual Studio Project. Open the project using the WhiteRobotLibr
 
 For developing and building the test library dll, you will need to install the Visual Studio Express 2013 and the latest Windows SDK (both can be installed free of charge). Open the WhiteRobotLibrarySolution.sln project in Visual studio and build the Release binaries. If the TestStack.White reference is missing, just add it from the NuGet repository by right-clicking the Project item or the References item in the Solution Manager window and selecting "Manage NuGet Packages...". Install or refresh (if notified) the TestStack.White package (use the search functionality if necessary).
 
-NRobotRemote v1.xx instructions:
+### NRobotRemote v1.xx instructions:
 
 Once the WhiteRobotLibrary.dll has been built, the remote server is started using the command:
 
@@ -15,7 +15,7 @@ NRobotRemoteConsole.exe -p 8271 -k WhiteRobotLibrary.dll:WhiteRobotLibrary.White
 
 (Note that the WhiteRobotLibrary.dll must be placed to the same directory where NRobotRemote has been copied)
 
-NRobotRemote v2.xx instructions: 
+### NRobotRemote v2.xx instructions: 
 
 Once the WhiteRobotLibrary.dll has been built, you need to add the WhiteRobotLibrary dll to the NRbotoRemote config.
 
@@ -31,7 +31,7 @@ Then run the NRobotRemoteTray.exe from the same directory, you should see the NR
 To make sure that it worked, right-click the NRobotRemote tray and select "Keywords".
 That should open a webpage with a list of the White keywords. 
 
-Using the keywords in RobotFramework: 
+### Using the keywords in RobotFramework: 
 
 To take the library into use in test scripts use:
 
